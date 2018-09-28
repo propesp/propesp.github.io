@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang='pt-br'>
+
+  <head>
+    <!-- Required meta tags -->
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0'>
+    <meta name='theme-color' content='#035b8a' />
+    <meta name='description' content='Leitor de QR Code da PROPESP' />
+
+    <title>PROPESP Reader</title>
+
+    <link rel='manifest' href='manifest.json'>
+
+    <link rel='icon' href='./assets/img/launcher-icon-1x.png' />
+
+    <style>
+      body {
+        overflow: hidden;
+      }
+
+      /* fallback */
+      @font-face {
+        font-family: 'Material Icons';
+        font-style: normal;
+        font-weight: 400;
+        src: url(./assets/fonts/material-icons.woff2) format('woff2');
+      }
+
+      div:focus,
+      div:active,
+      button:focus,
+      button:active,
+      a:focus,
+      a:active {
+        outline: none;
+      }
+
+      .transparent {
+        opacity: 0 !important;
+      }
+
+      .pp-images-preloader {
+        background-image: url(./assets/img/ui/qr-frame.svg);
+        opacity: 0;
+      }
+
+      .pp-no-select {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        -webkit-tap-highlight-color: transparent; // i.e. Nexus5/Chrome and Kindle Fire HD 7''
+        outline: none !important;
+        -webkit-user-modify: read-only;
+      }
+
+      .pp-loading-page {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #f2f7ff;
+        text-align: center;
+        z-index: 100;
+      }
+
+      .pp-loading-page--spinner {
+        width: 100%;
+        height: 30px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .pp-loading-page--spinner__circle {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #3f51b5;
+        border-right: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+        border-radius: 50%;
+        animation-name: spin;
+        animation-duration: .5s;
+        animation-iteration-count: infinite;
+        position: absolute;
+        left: calc(50% - 20px);
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .pp-scanner--status {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        overflow: hidden;
+        background-color: #000;
+      }
+
+      .pp-scanner--status .pp-scanner--status__frame {
+        width: 100%;
+        height: 100%;
+        background-image: url(./assets/img/ui/qr-frame.svg);
+        background-size: 300%;
+        background-repeat: no-repeat;
+        background-position: 50%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      .pp-scanner--status .pp-scanner--status__snap {
+        width: 100%;
+        height: 100%;
+        -webkit-box-shadow: inset 0 0 30px 15px rgba(255, 255, 255, 0.7);
+        box-shadow: inset 0 0 30px 15px rgba(255, 255, 255, 0.7);
+        position: absolute;
+        opacity: 0;
+      }
+
+      .pp-scanner--status .pp-scanner--status__success {
+        width: 100%;
+        height: 100%;
+        background-color: rgba(1, 158, 115, 0.5);
+        background-image: url(./assets/img/ui/light/ic_done_48dp.svg);
+        background-size: 100px;
+        background-repeat: no-repeat;
+        background-position: 50%;
+        position: absolute;
+        opacity: 0;
+      }
+
+      .pp-scanner--status .pp-scanner--status__error {
+        width: 100%;
+        height: 100%;
+        background-color: rgba(162, 17, 17, 0.5);
+        background-image: url(./assets/img/ui/light/ic_clear_48dp.svg);
+        background-size: 75px;
+        background-repeat: no-repeat;
+        background-position: 50%;
+        position: absolute;
+        opacity: 0;
+      }
+
+      .pp-scanner--status .pp-scanner--status__loading {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        -webkit-transform: scale(2);
+        transform: scale(2);
+      }
+
+      #pp-scanner--camera {
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+      }
+    </style>
+
+    <link async rel='stylesheet' href='./assets/libs/materialize/css/material-icons.css' />
+    <link async rel='stylesheet' href='./assets/libs/materialize/css/materialize.min.css' />
+    <link async rel='stylesheet' href='./assets/libs/materialize/css/materialize.custom.css' />
+    <link defer rel='stylesheet' href='./assets/libs/clusterize/clusterize.min.css' />
+    <link defer rel='stylesheet' href='./assets/css/main.min.css' />
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('sw.js', {
+            scope: '.' // <- THIS BIT IS REQUIRED
+          }).then(function(registration) {
+            // Registration was successful
+            console.log('ServiceWorker registration successful with scope: ' + registration.scope);
+          }).catch(function(err) {
+            // registration failed :(
+            console.log('ServiceWorker registration failed: ' + err);
+          });
+        });
+      }
+
+      // Request a one-off sync:
+      navigator.serviceWorker.ready.then(function(swRegistration) {
+        return swRegistration.sync.register('backgroundSync');
+      });
+
+      // make the whole serviceworker process into a promise so later on we can
+      // listen to it and in case new content is available a toast will be shown
+      window.isUpdateAvailable = new Promise(function(resolve, reject) {
+        // lazy way of disabling service workers while developing
+        if ('serviceWorker' in navigator && ['localhost', '127'].indexOf(location.hostname) === -1) {
+          // register service worker file
+          navigator.serviceWorker.register('sw.js')
+            .then(reg => {
+              reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                installingWorker.onstatechange = () => {
+                  switch (installingWorker.state) {
+                    case 'installed':
+                      if (navigator.serviceWorker.controller) {
+                        // new update available
+                        resolve(true);
+                      } else {
+                        // no update available
+                        resolve(false);
+                      }
+                      break;
+                  }
+                };
+              };
+            })
+            .catch(err => console.error('[SW ERROR]', err));
+        }
+      });
+
+      // listen to the service worker promise in index.html to see if there has been a new update.
+      // condition: the service-worker.js needs to have some kind of change - e.g. increment CACHE_VERSION.
+      window['isUpdateAvailable']
+        .then(isAvailable => {
+          if (isAvailable) {
+            alert('O app foi atualizado. Reinicie para aplicar as atualizações.');
+          }
+        });
+
+      // Update:
+      // this also can be incorporated right into e.g. your run() function in angular,
+      // to avoid using the global namespace for such a thing.
+      // because the registering of a service worker doesn't need to be executed on the first load of the page.
+    </script>
+    <script src='./assets/libs/jquery/jquery.min.js'></script>
+    <script src='./assets/libs/materialize/js/materialize.min.js'></script>
+
+  </head>
+
+  <body>
+    <div class='pp-images-preloader'></div>
+
+    <div class='pp-loading-page'>
+      <div class='pp-loading-page--spinner'>
+        <div class='pp-loading-page--spinner__circle'></div>
+      </div>
+    </div>
+
+    <div class='pp-main-container'>
+      <div class='pp-main-container__inner'>
+        <nav class='nav-extended pp-no-select'>
+          <div class='nav-wrapper'>
+            <span class='brand-logo'><i class='material-icons'>crop_free</i> PROPESP Reader</span>
+
+            <!--a id='manualSync' class='pp-main-options'><i class='material-icons'>sync</i></a-->
+            <a class='pp-main-options dropdown-trigger' data-target='pp-main-menu'><i class='material-icons'>more_vert</i></a>
+            <ul id='pp-main-menu' class='dropdown-content'>
+              <li><a onclick='qrScan.reload();'><i class='material-icons'>sync</i> Reiniciar</a></li>
+              <li><a onclick='qrScan.saveJSON();'><i class='material-icons'>file_download</i> Baixar dados</a></li>
+              <li class='divider' tabindex='-1'></li>
+              <!--li><a onclick='qrScan.clearSaved();'><i class='material-icons'>delete_forever</i>Limpar salvos</a></li>
+              <li><a onclick='qrScan.clearRejected();'><i class='material-icons'>delete_forever</i>Limpar rejeitados</a></li-->
+            </ul>
+          </div>
+          <!-- Tabs -->
+          <div class='nav-content'>
+            <div class='col s12'>
+              <ul class='tabs tabs-transparent'>
+                <li class='tab col s4'><a class='active' href='#scroll-tab-1'><i class='material-icons'>camera_alt</i></a></li>
+                <li class='tab col s4'><a class='' href='#scroll-tab-2'>Salvos</a></li>
+                <li class='tab col s4'><a class='' href='#scroll-tab-3'>Rejeitados</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+        <!-- Ler codigo -->
+        <main>
+          <div class='pp-tab--section' id='scroll-tab-1'>
+            <div class='pp-scanner--status'>
+              <div class='pp-scanner--status__frame'></div>
+              <div class='pp-scanner--status__snap'></div>
+              <div class='pp-scanner--status__success'></div>
+              <div class='pp-scanner--status__error'></div>
+              <div class='pp-scanner--status__loading'>
+                <div class='pp-loading-page--spinner'>
+                  <div class='preloader-wrapper small active'>
+                    <div class='spinner-layer spinner-blue-only'>
+                      <div class='circle-clipper left'>
+                        <div class='circle'></div>
+                      </div>
+                      <div class='gap-patch'>
+                        <div class='circle'></div>
+                      </div>
+                      <div class='circle-clipper right'>
+                        <div class='circle'></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <video id='pp-scanner--camera' playsinline autoplay muted loop></video>
+            </div>
+          </div>
+
+          <!-- Salvos -->
+          <div class='pp-tab--section' id='scroll-tab-2'>
+            <div class='pp-scanned-list'>
+              <div id='pp-scanned-list__cluster-scroll--saved' class='clusterize-scroll'>
+                <ul id='pp-scanned-list__cluster-content--saved' class='collection clusterize-content'></ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Salvos -->
+          <div class='pp-tab--section' id='scroll-tab-3'>
+            <div class='pp-scanned-list'>
+              <div id='pp-scanned-list__cluster-scroll--rejected' class='clusterize-scroll'>
+                <ul id='pp-scanned-list__cluster-content--rejected' class='collection clusterize-content'></ul>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script src='./assets/libs/instascan/instascan.compressed.js'></script>
+    <script src='./assets/libs/clusterize/clusterize.min.js'></script>
+    <script src='./assets/libs/criptojs/cripto-aes.min.js'></script>
+    <script src='./assets/libs/instascan/adapter.min.js'></script>
+
+    <script defer src='./assets/js/main.min.js'></script>
+
+    <script defer>
+      let domReady = function(ready) {
+        if (document.readyState !== 'loading') {
+          return ready();
+        }
+        document.addEventListener('DOMContentLoaded', ready);
+
+        function _ready() {
+          document.removeEventListener('DOMContentLoaded', ready);
+          ready();
+        }
+      }
+
+      domReady(function() {
+        qrScan.animate._pageLoaded();
+      });
+    </script>
+  </body>
+
+</html>
