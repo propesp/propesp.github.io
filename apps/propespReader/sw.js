@@ -106,8 +106,6 @@ self.addEventListener('fetch', function (event) {
   );
 });
 
-window.CACHE_VERSION = CACHE_VERSION;
-
 
 /* TODO: Background Sync
 self.addEventListener('sync', function(event) {
