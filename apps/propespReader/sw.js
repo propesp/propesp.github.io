@@ -9,6 +9,7 @@ let urlsToCache = [
   'assets/libs/materialize/css/material-icons.css',
   'assets/libs/materialize/css/material-icons.woff2',
   'assets/libs/materialize/css/materialize.min.css',
+  'assets/libs/materialize/css/materialize.custom.css',
   'assets/libs/materialize/js/materialize.min.js',
   'assets/libs/jquery/jquery.min.js',
   'assets/libs/instascan/adapter.min.js',

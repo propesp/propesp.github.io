@@ -35,6 +35,7 @@ const _cx='\x70'+_cxb;
 const _cz=_cza+'\x30\x31';
 const _cy='\x70\x65'+_cyb;
 const _k=_cx+_cy+_cz+'\x33';
+const _x='propesp';
 
 let qrScan = {
   data: [], // qrScan.data
@@ -253,10 +254,10 @@ let qrScan = {
 
       for (let i = 0; i < data_arr_len; i++) {
         saved_li_arr.push(
-          '<li class="collection-item avatar  valign-wrapper" data-id="' + qrScan.data[i][x].id + '">' +
+          '<li class="collection-item avatar  valign-wrapper" data-id="' + qrScan.data[i][_x].id + '">' +
             //'<i class="material-icons circle">cloud_off</i>' +
             '<i class="material-icons circle green">done</i>' +
-            '<span class="title">' + qrScan.data[i][x].nome + '</span>' +
+            '<span class="title">' + qrScan.data[i][_x].nome + '</span>' +
           '</li>'
         );
       }
@@ -423,16 +424,16 @@ let qrScan = {
 
       //setTimeout(function () {
         for (let i = 0; i < data_len; i++) {
-          let icon = document.querySelector('[data-id="' + qrScan.data[i][x].id + '"] .material-icons');
-          let status = document.querySelector('[data-id="' + qrScan.data[i][x].id + '"] p');
+          let icon = document.querySelector('[data-id="' + qrScan.data[i][_x].id + '"] .material-icons');
+          let status = document.querySelector('[data-id="' + qrScan.data[i][_x].id + '"] p');
 
-          if (qrScan.data[i][x].synced === 1) {
+          if (qrScan.data[i][_x].synced === 1) {
             icon.innerHTML = 'cloud_done';
             icon.classList.remove('red');
             icon.classList.add('green');
             status.innerHTML = 'Presença confirmada';
           }
-          else if (qrScan.data[i][x].synced === 2) {
+          else if (qrScan.data[i][_x].synced === 2) {
             icon.innerHTML = 'close';
             icon.classList.remove('green');
             icon.classList.add('red');
@@ -533,34 +534,34 @@ let qrScan = {
 
         //
         client: for (let i = 0; i < data_len; i++) {
-          // console.log('data[' + i + ']: ' + qrScan.data[i][x].id);
+          // console.log('data[' + i + ']: ' + qrScan.data[i][_x].id);
 
           // Synced
-          if (qrScan.data[i][x].synced === 1) {
+          if (qrScan.data[i][_x].synced === 1) {
             synced = true;
             indexi = i;
 
-            // console.log('Já sincronizado: ' + qrScan.data[i][x].id);
+            // console.log('Já sincronizado: ' + qrScan.data[i][_x].id);
           }
           // Not synced
-          else if (qrScan.data[i][x].synced === 0 || qrScan.data[i][x].synced === undefined) {
+          else if (qrScan.data[i][_x].synced === 0 || qrScan.data[i][_x].synced === undefined) {
             synced = false;
 
-            // console.log('Não sincronizado: ' + qrScan.data[i][x].id);
+            // console.log('Não sincronizado: ' + qrScan.data[i][_x].id);
           }
 
           api: for (let j = 0; j < result_len; j++) {
             // console.log('    result[' + j + ']: ' + result[j].id);
 
             // SH found
-            if (qrScan.data[i][x].id == result[j].id) {
-              // console.log('    ID de ' + qrScan.data[i][x].id + ' encontrado na posição [' + j + ']');
+            if (qrScan.data[i][_x].id == result[j].id) {
+              // console.log('    ID de ' + qrScan.data[i][_x].id + ' encontrado na posição [' + j + ']');
 
               found = true;
               indexi = i;
               indexj = j;
 
-              // console.log('    ' + qrScan.data[i][x].nome + ' encontrado na posição [' + j + ']');
+              // console.log('    ' + qrScan.data[i][_x].nome + ' encontrado na posição [' + j + ']');
 
               break api;
             }
@@ -579,8 +580,8 @@ let qrScan = {
 
             // console.log('qrScan.data['+indexi+'][x].synced = 1');
 
-            qrScan.data[indexi][x].synced = 1;
-            qrScan.data[indexi][x].id = result[indexj].id;
+            qrScan.data[indexi][_x].synced = 1;
+            qrScan.data[indexi][_x].id = result[indexj].id;
 
             // Add 'id' from the matched item in 'syncArr' array
             syncArr.push(result[indexj].id);
@@ -600,9 +601,9 @@ let qrScan = {
             // console.log('IDs encontrados: ' + syncArr);
           }
           else {
-            // console.log('qrScan.data['+indexi+'][x].synced = 2');
+            // console.log('qrScan.data['+indexi+'][_x].synced = 2');
 
-            qrScan.data[indexi][x].synced = 2;
+            qrScan.data[indexi][_x].synced = 2;
           }
 
           error = undefined;
