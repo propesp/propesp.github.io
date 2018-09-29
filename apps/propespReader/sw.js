@@ -1,6 +1,6 @@
 /* jshint esversion: 6 */
 
-let CACHE_VERSION = '1.0.5';
+let CACHE_VERSION = '1.0.6';
 let CACHE_NAME = 'scannerCache';
 let urlsToCache = [
   'index.html',
@@ -13,7 +13,7 @@ let urlsToCache = [
   'assets/libs/jquery/jquery.min.js',
   'assets/libs/instascan/adapter.min.js',
   'assets/libs/instascan/instascan.compressed.js',
-  'assets/libs/criptojs/cripto-aes.min.js',
+  'assets/libs/cryptojs/crypto-aes.min.js',
   'assets/libs/clusterize/clusterize.min.css',
   'assets/libs/clusterize/clusterize.min.js'
 ];
@@ -106,8 +106,10 @@ self.addEventListener('fetch', function (event) {
   );
 });
 
+window.CACHE_VERSION = CACHE_VERSION;
 
-/* TODO TODO TODO TODO
+
+/* TODO: Background Sync
 self.addEventListener('sync', function(event) {
   if (event.tag == 'backgroundSync') {
     event.waitUntil(qrScan.sync());
