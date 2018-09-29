@@ -26,5 +26,5 @@
   "orientation": "portrait",
   "theme_color": "#035b8a",
   "background_color": "#f2f7ff",
-  "start_url": "/propespReader/?utm_source=homescreen"
+  "start_url": "/apps/propespReader/?utm_source=homescreen"
 }
